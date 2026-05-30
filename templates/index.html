@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>House Price Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #1a1a2e;
+      --gold:   #c9a84c;
+      --gold2:  #f0c96a;
+      --cream:  #fdf6ec;
+      --card:   #ffffff;
+      --muted:  #6b7080;
+      --border: #e8e0d0;
+      --yes:    #2d7a4f;
+      --no:     #8a3a2e;
+      --radius: 14px;
+      --shadow: 0 4px 32px rgba(26,26,46,.10);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--ink);
+      color: #fff;
+      padding: 36px 24px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(201,168,76,.18) 0%, transparent 65%);
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: -.02em;
+      position: relative;
+    }
+    header h1 span { color: var(--gold); }
+    header p {
+      margin-top: 8px;
+      font-size: .95rem;
+      color: rgba(255,255,255,.65);
+      font-weight: 300;
+      position: relative;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 4px 14px;
+      background: rgba(201,168,76,.2);
+      border: 1px solid rgba(201,168,76,.4);
+      border-radius: 50px;
+      font-size: .78rem;
+      color: var(--gold2);
+      font-weight: 500;
+      letter-spacing: .04em;
+      position: relative;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 18px;
+    }
+
+    /* ── Section cards ── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      margin-top: 24px;
+      box-shadow: var(--shadow);
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .icon {
+      width: 30px; height: 30px;
+      background: var(--ink);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media(max-width:580px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Form elements ── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    input[type=number], select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      color: var(--ink);
+      background: #fafafa;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+    }
+    input[type=number]:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,.15);
+      background: #fff;
+    }
+    /* custom select arrow */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute; right: 13px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); pointer-events: none; font-size: .85rem;
+    }
+    .select-wrap select { padding-right: 34px; cursor: pointer; }
+
+    /* ── Toggle (yes/no) ── */
+    .toggle-group { display: flex; gap: 8px; }
+    .toggle-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+      color: var(--muted);
+    }
+    .toggle-btn.active-yes {
+      background: var(--yes); border-color: var(--yes);
+      color: #fff;
+    }
+    .toggle-btn.active-no {
+      background: var(--no); border-color: var(--no);
+      color: #fff;
+    }
+    .toggle-btn:hover:not(.active-yes):not(.active-no) {
+      border-color: var(--gold); color: var(--ink);
+    }
+
+    /* ── Predict button ── */
+    .predict-wrap { text-align: center; margin-top: 28px; }
+    .predict-btn {
+      padding: 16px 56px;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, background .15s;
+      box-shadow: 0 6px 24px rgba(26,26,46,.25);
+      letter-spacing: .01em;
+    }
+    .predict-btn:hover {
+      background: #2a2a4a;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(26,26,46,.3);
+    }
+    .predict-btn:active { transform: translateY(0); }
+    .predict-btn.loading {
+      opacity: .7; cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Result card ── */
+    #result-card {
+      display: none;
+      background: var(--ink);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      margin-top: 24px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(26,26,46,.25);
+      animation: slideUp .4s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #result-card .label {
+      font-size: .82rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+      font-weight: 600;
+    }
+    #result-card .price {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 900;
+      color: var(--gold);
+      margin: 8px 0 4px;
+      line-height: 1.1;
+    }
+    #result-card .sub {
+      font-size: .85rem;
+      color: rgba(255,255,255,.5);
+    }
+    .metrics-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+    .metric { text-align: center; }
+    .metric .val { font-size: 1.1rem; font-weight: 700; color: var(--gold2); }
+    .metric .key { font-size: .72rem; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+
+    /* ── Error ── */
+    #error-msg {
+      display: none;
+      background: #fff0f0;
+      border: 1px solid #f5c6c6;
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--no);
+      margin-top: 16px;
+      font-size: .9rem;
+    }
+
+    /* ── Info strip ── */
+    .info-strip {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .info-pill {
+      flex: 1;
+      min-width: 180px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    .info-pill .emoji { font-size: 1.4rem; }
+    .info-pill .text .top { font-weight: 600; font-size: .88rem; }
+    .info-pill .text .bot { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 House <span>Price</span> Predictor</h1>
+  <p>Machine Learning · Linear Regression · Trained on 545 properties</p>
+  <div class="badge">R² Score: 0.77 &nbsp;|&nbsp; 77% Accuracy</div>
+</header>
+
+<div class="container">
+
+  <!-- Info pills -->
+  <div class="info-strip">
+    <div class="info-pill">
+      <div class="emoji">📊</div>
+      <div class="text">
+        <div class="top">545 Properties</div>
+        <div class="bot">Real dataset used for training</div>
+      </div>
+    </div>
+    <div class="info-pill">
+      <div class="emoji">🤖</div>
+      <div class="text">
+        <div class="top">Linear Regression</div>
+        <div class="bot">17 features after engineering</div>
+      </div>
+    </div>
+    <div class="info-pill">
+      <div class="emoji">🎯</div>
+      <div class="text">
+        <div class="top">R² = 0.77</div>
+        <div class="bot">Explains 77% of price variation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Basic Info -->
+  <div class="section-card">
+    <div class="section-title">
+      <div class="icon">📐</div> Basic Property Details
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Area (sq ft)</label>
+        <input type="number" id="area" placeholder="e.g. 5000" min="500" max="20000"/>
+      </div>
+      <div class="field">
+        <label>Parking Spaces</label>
+        <div class="select-wrap">
+          <select id="parking">
+            <option value="0">0 — No parking</option>
+            <option value="1">1 — One space</option>
+            <option value="2">2 — Two spaces</option>
+            <option value="3">3 — Three spaces</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bedrooms</label>
+        <div class="select-wrap">
+          <select id="bedrooms">
+            <option value="1">1 Bedroom</option>
+            <option value="2">2 Bedrooms</option>
+            <option value="3" selected>3 Bedrooms</option>
+            <option value="4">4 Bedrooms</option>
+            <option value="5">5 Bedrooms</option>
+            <option value="6">6 Bedrooms</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bathrooms</label>
+        <div class="select-wrap">
+          <select id="bathrooms">
+            <option value="1">1 Bathroom</option>
+            <option value="2" selected>2 Bathrooms</option>
+            <option value="3">3 Bathrooms</option>
+            <option value="4">4 Bathrooms</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Stories (Floors)</label>
+        <div class="select-wrap">
+          <select id="stories">
+            <option value="1">1 Floor</option>
+            <option value="2" selected>2 Floors</option>
+            <option value="3">3 Floors</option>
+            <option value="4">4 Floors</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Furnishing Status</label>
+        <div class="select-wrap">
+          <select id="furnishingstatus">
+            <option value="furnished">Furnished</option>
+            <option value="semi-furnished" selected>Semi-Furnished</option>
+            <option value="unfurnished">Unfurnished</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Amenities -->
+  <div class="section-card">
+    <div class="section-title">
+      <div class="icon">✨</div> Amenities &amp; Features
+    </div>
+    <div class="grid-3" id="toggles-container">
+      <!-- Toggles injected by JS -->
+    </div>
+  </div>
+
+  <!-- Predict button -->
+  <div class="predict-wrap">
+    <button class="predict-btn" id="predict-btn" onclick="predict()">
+      Predict Price →
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div id="error-msg"></div>
+
+  <!-- Result -->
+  <div id="result-card">
+    <div class="label">Estimated Market Value</div>
+    <div class="price" id="price-display">—</div>
+    <div class="sub" id="price-sub">Based on your property details</div>
+    <div class="metrics-row">
+      <div class="metric">
+        <div class="val">77%</div>
+        <div class="key">Model Accuracy (R²)</div>
+      </div>
+      <div class="metric">
+        <div class="val">Linear</div>
+        <div class="key">Algorithm</div>
+      </div>
+      <div class="metric">
+        <div class="val">545</div>
+        <div class="key">Training Samples</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  // ── Build yes/no toggles ────────────────────────────────────────
+  const toggleFields = [
+    { id: 'mainroad',        label: 'Main Road Access', default: 'yes' },
+    { id: 'guestroom',       label: 'Guest Room',       default: 'no'  },
+    { id: 'basement',        label: 'Basement',         default: 'no'  },
+    { id: 'hotwaterheating', label: 'Hot Water Heating',default: 'no'  },
+    { id: 'airconditioning', label: 'Air Conditioning', default: 'no'  },
+    { id: 'prefarea',        label: 'Preferred Area',   default: 'no'  },
+  ];
+
+  const container = document.getElementById('toggles-container');
+  toggleFields.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    wrap.innerHTML = `
+      <label>${f.label}</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${f.default==='yes'?'active-yes':''}"
+                id="${f.id}-yes" onclick="setToggle('${f.id}','yes')">✓ Yes</button>
+        <button class="toggle-btn ${f.default==='no'?'active-no':''}"
+                id="${f.id}-no"  onclick="setToggle('${f.id}','no')">✗ No</button>
+      </div>
+    `;
+    container.appendChild(wrap);
+  });
+
+  function setToggle(id, val) {
+    document.getElementById(`${id}-yes`).className =
+      'toggle-btn' + (val==='yes' ? ' active-yes' : '');
+    document.getElementById(`${id}-no`).className  =
+      'toggle-btn' + (val==='no'  ? ' active-no'  : '');
+  }
+
+  function getToggle(id) {
+    return document.getElementById(`${id}-yes`).classList.contains('active-yes')
+      ? 'yes' : 'no';
+  }
+
+  // ── Predict ─────────────────────────────────────────────────────
+  async function predict() {
+    const areaVal = document.getElementById('area').value;
+    if (!areaVal || areaVal <= 0) {
+      showError('Please enter a valid area (sq ft).');
+      return;
+    }
+
+    const btn = document.getElementById('predict-btn');
+    btn.textContent = 'Predicting…';
+    btn.classList.add('loading');
+    btn.disabled = true;
+    hideError();
+    document.getElementById('result-card').style.display = 'none';
+
+    const payload = {
+      area:            parseFloat(areaVal),
+      bedrooms:        parseInt(document.getElementById('bedrooms').value),
+      bathrooms:       parseInt(document.getElementById('bathrooms').value),
+      stories:         parseInt(document.getElementById('stories').value),
+      parking:         parseInt(document.getElementById('parking').value),
+      furnishingstatus: document.getElementById('furnishingstatus').value,
+      mainroad:        getToggle('mainroad'),
+      guestroom:       getToggle('guestroom'),
+      basement:        getToggle('basement'),
+      hotwaterheating: getToggle('hotwaterheating'),
+      airconditioning: getToggle('airconditioning'),
+      prefarea:        getToggle('prefarea'),
+    };
+
+    try {
+      const res  = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('price-display').textContent = data.formatted_price;
+        document.getElementById('price-sub').textContent =
+          `For a ${payload.area} sq ft, ${payload.bedrooms}BHK property`;
+        document.getElementById('result-card').style.display = 'block';
+        document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        showError('Prediction failed: ' + data.error);
+      }
+    } catch (err) {
+      showError('Could not connect to server. Make sure app.py is running.');
+    } finally {
+      btn.textContent = 'Predict Price →';
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = '⚠ ' + msg;
+    el.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('error-msg').style.display = 'none';
+  }
+</script>
+</body>
+</html>
